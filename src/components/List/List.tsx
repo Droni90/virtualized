@@ -1,6 +1,7 @@
-import React, { memo, useRef, useState } from "react";
+import React, { memo, useCallback, useRef, useState } from "react";
 import s from "./List.module.css";
-import { SimpleVirtualized } from "../SimpleVirtualized/SimpleVirtualized";
+import { UseVirtualized } from "../Virtualized/useVirtualized";
+import { faker } from "@faker-js/faker";
 
 interface Item {
   id: string;
@@ -10,7 +11,7 @@ interface Item {
 const items: Item[] = new Array(1000).fill(0).map((_, index) => {
   return {
     id: Math.random().toString(36).slice(2),
-    text: index.toString(),
+    text: faker.lorem.text(),
   };
 });
 
@@ -18,14 +19,13 @@ export const List = memo(() => {
   const [itemsArr, setItemsArr] = useState<Item[]>(items);
 
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
-  const itemHeight = 40;
   const containerHeight = 600;
 
-  const { getItemStyles, virtualizedItems, isScrolling } = SimpleVirtualized({
-    containerHeight,
-    itemHeight,
+  const { virtualizedItems, totalHeight, measureElement } = UseVirtualized({
+    estimateItemHeight: useCallback(() => 40, []),
     scrollElementRef,
     data: itemsArr,
+    getItemKey: useCallback((index) => itemsArr[index].id, [itemsArr]),
   });
 
   return (
@@ -39,18 +39,24 @@ export const List = memo(() => {
       </button>
       <div
         style={{
-          height: itemHeight * itemsArr.length,
+          height: totalHeight,
         }}
       >
         {virtualizedItems.map((i) => {
           const item = itemsArr[i.index];
+
           return (
             <div
-              className={s.List__item}
-              style={getItemStyles(i)}
+              ref={measureElement}
+              data-index={i.index}
+              style={{
+                position: "absolute",
+                top: 0,
+                transform: `translateY(${i.offsetTop}px)`,
+              }}
               key={item.id}
             >
-              {isScrolling ? "Loading..." : item.text}
+              {i.index} - {item.text}
             </div>
           );
         })}

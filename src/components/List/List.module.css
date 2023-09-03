@@ -4,8 +4,3 @@
   margin: 0 auto;
   position: relative;
 }
-
-.List__item {
-  display: flex;
-  align-items: center;
-}
